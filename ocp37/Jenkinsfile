@@ -1,0 +1,22 @@
+node() {
+    stage ('Build') {
+      sh 'oc start-build nationalparks-dev'
+    }
+  
+    stage ('Deploy Dev') {
+      sh 'oc rollout latest nationalparks-dev'
+    }
+
+    stage ('Test Dev') {
+        sh 'curl -s http://nationalparks-dev:8080/ws/data/load'
+        sh 'curl -s http://nationalparks-dev:8080/ws/data/all | grep -q \"Grand Canyon National Park\"'
+    }
+  
+    stage ('Deploy Live') {
+        timeout(time:15, unit: 'MINUTES') {
+          input 'Promote the Dev image to Live?'
+        }
+
+        sh 'oc tag nationalparks:latest nationalparks:prod'
+    }
+}
